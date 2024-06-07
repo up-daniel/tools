@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="shortcut icon" href="https://mu-jie.cc/favicon.ico?v=1684996022481">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>图床-图片上传</title>
+  <script src="https://mujie-data.oss-cn-shenzhen.aliyuncs.com/rely/clipboard.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f2f2f2;
+      background-image: linear-gradient(to bottom right,
+          #3a7bd561,
+          #3f5efb56,
+          #af52bf55,
+          #c873e06e);
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-attachment: fixed;
+    }
+
+    .container {
+      justify-content: center;
+      align-items: center;
+    }
+
+    /*上传图片*/
+    .form-container {
+      position: relative;
+      top: 25vh;
+      left: calc(12% - 25px);
+      width: 70%;
+      padding: 40px;
+      background-color: #fff;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      transition-duration: 0.5s;
+    }
+
+    input[type=file] {
+      height: 50px;
+      width: 100%;
+      background-color: rgba(255, 255, 255, 0);
+    }
+
+    /*图片*/
+    .img {
+      text-align: center;
+      position: relative;
+      top: 20px;
+      padding: 40px;
+      display: none;
+    }
+
+    .form-container h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .form-container input[type="file"] {
+      margin-bottom: 20px;
+    }
+
+    .form-container button[type="submit"] {
+      display: block;
+      margin: 0 auto;
+      background-color: #4CAF50;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .form-container button[type="submit"]:hover {
+      background-color: #3e8e41;
+    }
+
+    .progress-container {
+      position: relative;
+      width: 100%;
+      background-color: #f2f2f2;
+      height: 10px;
+      border-radius: 5px;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      background-color: #4CAF50;
+      height: 100%;
+    }
+
+    a {
+      color: rgb(255, 255, 255);
+      text-decoration: none;
+    }
+
+    .footnote {
+      background-color: rgb(255, 172, 172);
+      position: fixed;
+      width: 94%;
+      font-size: 14px;
+      height: 60px;
+      text-align: center;
+      color: #ffffff;
+      border-radius: 10px;
+      bottom: 20px;
+      left: 3%;
+    }
+
+    #my-textarea {
+      font-size: 18px;
+      padding: 10px;
+      border-width: 0px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+      border-radius: 5px;
+    }
+
+    @media screen and (min-width:720px) {
+      .footnote {
+        width: 485px;
+        left: calc(50% - 485px/2);
+      }
+
+      .form-container {
+        width: 400px;
+        left: calc(50% - 480px/2);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <form class="form-container" enctype="multipart/form-data">
+      <h2>上传图片</h2>
+      <input type="file" name="image" accept=".jpg, .jpeg, .png">
+      <button type="submit" name="submit">上传</button>
+    </form>
+  </div>
+  <div class="img">
+    <form>
+      <label for="my-textarea">图片链接:</label>
+      <button id="copyBtn" data-clipboard-text="copy_content">一键复制</button>
+      <textarea id="my-textarea" name="my-textarea" rows="4" cols="38"></textarea>
+    </form>
+  </div>
+  <div class="footnote">
+    <div style="height: 12px;"></div>
+    <footnote>
+      图床小工具|DANIEL
+      <br>
+      <a href="https://api.aa1.cn/doc/tucdn.html" target="_blank" rel="noopener noreferrer">接口提供：夏柔</a>
+    </footnote>
+  </div>
+  <script>
+    const containerEm = document.querySelector('.form-container');
+    const imgEm = document.querySelector('.img');
+    const url = document.getElementById('my-textarea');
+    const form = document.querySelector('form');
+    const fileInput = form.querySelector('input[type="file"]');
+    const uploadBtn = form.querySelector('button[type="submit"]');
+    const progressContainer = document.createElement('div');
+    const progressBar = document.createElement('div');
+
+    progressContainer.classList.add('progress-container');
+    progressBar.classList.add('progress-bar');
+
+    progressContainer.appendChild(progressBar);
+    form.appendChild(progressContainer);
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!fileInput.files.length) {
+        alert('请选择要上传的图片！');
+        return;
+      }
+      const xhr = new XMLHttpRequest();
+
+      xhr.open('POST', 'https://tucdn.wpon.cn/api/upload');
+
+      xhr.upload.addEventListener('progress', e => {
+        const percent = e.loaded / e.total * 100;
+        progressBar.style.width = `${percent}%`;
+      });
+
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+          if (xhr.status === 200) {
+            alert('上传成功！');
+            containerEm.style.top = '2vh';
+            imgEm.style.display = 'inline';
+            url.value = JSON.parse(xhr.responseText)["data"]["url"];
+            document.getElementById('copyBtn').setAttribute("data-clipboard-text", url.value);
+            containerEm.style.top = '1vh';
+            console.log(xhr.responseText);
+            progressBar.style.width = '0';
+          } else {
+            alert(`上传失败：${xhr.status}`);
+          }
+
+          uploadBtn.disabled = false;
+          fileInput.value = '';
+        }
+      };
+
+      const formData = new FormData(form);
+      xhr.send(formData);
+
+      uploadBtn.disabled = true;
+    });
+
+    // 复制链接到剪贴板
+    let clipboard = new ClipboardJS('#copyBtn');
+    clipboard.on('success', function (e) {
+      console.log('已复制文本：' + e.text);
+      alert('已复制链接');
+      e.clearSelection();
+    });
+    clipboard.on('error', function (e) {
+      console.error('出错了：' + e.action);
+      window.parent.dialogDisplay('出错了！');
+    });
+  </script>
+</body>
+
+</html>
